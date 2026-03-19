@@ -2,6 +2,9 @@ import { TestBed } from '@angular/core/testing';
 import { App } from './app';
 import { BehaviorSubject, distinctUntilChanged, filter, interval, map, Observable, of, Subject, take, tap } from 'rxjs';
 
+
+//Jest -  En angular 21 se usa mas vitest>
+
 describe('App', () => {
 
   // beforeEach(async () => {
@@ -23,10 +26,13 @@ describe('App', () => {
   //   expect(compiled.querySelector('h1')?.textContent).toContain('Hello, videoclub-ng-bs-app');
   // });
 
+
+    //Hay que realizar una funcion asincrona ya que existe await en nuestro código:
+
     it('promises vs observables', async () => {
     
       //Railtruck pattern:
-      //then way
+      //then way (happy path) Si resuelve va por el happy path
       //   |
       //   v
       //===X=====X=============X===== resolve
@@ -38,6 +44,10 @@ describe('App', () => {
       //============================= reject
       //               ^
       //catch way ------
+
+      //Estilo de codigo mas asincrono se resuelve cuando la promesa es resuelta
+
+      //Código mas costoso de mantener.
       parseNumberWithDelay('50')      
       .then( r => {
         return r*2;
@@ -45,15 +55,22 @@ describe('App', () => {
         //pero sin necesidad de escribir
         //return Promise.resolve(r*2);
       })      
-      .catch(console.error)
+      .catch( () => 100)
+
+      // se puede anidar varios then consecutivos pero debemos analizar bien el 
+      // código anterior ya que puede dar varios errores
+      .then( r => {
+          return 3*r;
+      })
+
       //.catch(e => console.error(e))
       .then(console.log);
       //.then(r => console.log(r));
 
 
-      //Por await
+      //Por await - estilo síncrono mas utilizado hoy día...
       try {
-        const result = await parseNumberWithDelay('50');
+        const result = await parseNumberWithDelay('50'); //Este await parte el metodo en DOS parte
         console.log(result);
       } catch (e) {
         console.error(e);        
@@ -102,6 +119,9 @@ describe('App', () => {
               sub.complete();
             });
 
+
+    // $ = Stream = Flujo -> obs$ -> ObsStream (Creado por un Finlandes por eso el $)
+    
     obs$.subscribe((v) => console.log("A:", v));
     obs$.subscribe((v) => console.log("B:", v));
     // Verás "Se ejecuta el producer" dos veces y valores distintos
@@ -135,6 +155,7 @@ describe('App', () => {
     bs$.next(2); // A recibe 2, B recibe 2
 
     of(1, 2, 3, 4)
+    //Js y Node js es filosofía unix -> pipes de comandos adaptadas al lenguaje | | |
     .pipe(
       filter( n => n % 2 === 0),
       map( n => n * 10)
@@ -175,11 +196,13 @@ function parseNumberWithDelay(n: string, delay: number = 1000): Promise<number> 
   return new Promise((resolve, reject) => {
     
     setTimeout(() => {
-      const parsed = parseInt(n, 10);
+      //const parsed = parseInt(n, 10);
+      const parsed = Number(n); //-> Nan si n no es representable de forma entera como un numero.
       if (isNaN(parsed)) {
-        reject(new Error(`Cannot parse '${n}' as a number`));
+        reject(new Error(`Cannot parse '${n}' as a number`)); //Si hay error se usa el reject y se rechaza.
       } else {
-        resolve(parsed);
+        resolve(parsed); //Si no hay error se aprueba y se resuelve.
+
       }
     }, delay);
 
